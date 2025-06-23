@@ -4,42 +4,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Damo Bot v13 – Real + Click Page</title>
+  <title>Damo Bot v15 – Full Final</title>
   <script src="//libtl.com/sdk.js" data-zone="9370281" data-sdk="show_9370281"></script>
   <style>
     body { background:#000; color:#0f0; font-family:sans-serif; text-align:center; padding:20px; }
     .box { border:2px solid #0f0; padding:20px; border-radius:10px; background:#111; max-width:430px; margin:auto; }
     button { background:#0f0; color:#000; padding:10px 20px; margin:8px; border:none; font-weight:bold; border-radius:5px; cursor:pointer; }
-    #geoInfo,#ipType,#ipScore,#autoStatus,#countdown,#usernameDisplay,#bonusClickNote { font-weight:bold; }
-    #geoInfo { color:cyan; } #ipType { color:orange; } #ipScore { color:yellow; }
-    #countdown { color:#0ff; } #autoStatus { color:#fa0; } #bonusClickNote { color:#ff0; }
+    #geoInfo,#ipType,#countdown,#usernameDisplay,#bonusClickNote,#autoStatus { font-weight:bold; }
+    #geoInfo { color:cyan; } #ipType { color:orange; }
+    #countdown { color:#0ff; } #bonusClickNote { color:#ff0; } #autoStatus { color:#0ff; }
   </style>
 </head>
 <body>
 <div class="box">
-  <h2>🎯 Damo Bot v13 – Final Version</h2>
+  <h2>🎯 Damo Bot v15 – Final</h2>
   <p id="geoInfo">🌐 Geo তথ্য লোড হচ্ছে...</p>
   <p id="ipType"></p>
-  <p id="ipScore"></p>
   <p id="usernameDisplay"></p>
   <p>মোট বিজ্ঞাপন দেখা হয়েছে: <span id="watched">0</span></p>
   <p>মোট কয়েন: <span id="coins">0</span></p>
-  <button id="manualBtn" onclick="showRewardAd()">🎬 একটি বিজ্ঞাপন দেখুন</button>
-  <button id="autoBtn" onclick="startSmartAutoAds()">🤖 স্মার্ট অটো চালু</button>
-  <button onclick="stopAutoAds()">🛑 বন্ধ করুন</button>
+  <button onclick="showRewardAd()">🎬 একটি বিজ্ঞাপন দেখুন</button>
+  <button onclick="startAuto()">🤖 অটো শুরু করুন</button>
+  <button onclick="stopAuto()">🛑 বন্ধ করুন</button>
+  <p id="bonusClickNote"></p>
   <p id="autoStatus"></p>
   <p id="countdown"></p>
-  <p id="bonusClickNote"></p>
 </div>
 
 <script>
 let coins = Number(localStorage.getItem("coins") || 0);
 let watched = Number(localStorage.getItem("watched") || 0);
-let autoInterval, autoStopTimer, cooldownTimer, bonusCountdown;
-let isAutoRunning = false;
-const AUTO_RUN_MS = 10 * 60 * 1000, COOLDOWN_MS = 15 * 60 * 1000;
-const user = localStorage.getItem("username") || "User" + Math.floor(Math.random() * 9999);
+let autoStartTime = Number(localStorage.getItem("autoStartTime") || 0);
+let cooldownUntil = Number(localStorage.getItem("cooldownUntil") || 0);
+let user = localStorage.getItem("username") || "User" + Math.floor(Math.random()*9999);
 localStorage.setItem("username", user);
+
+let autoInterval, bonusCountdown, cooldownTimer;
+let isAutoRunning = false;
+
 document.getElementById("usernameDisplay").innerText = "👤 ইউজার: " + user;
 
 function updateDisplay() {
@@ -49,24 +51,15 @@ function updateDisplay() {
   localStorage.setItem("watched", watched);
 }
 
-function fullReset() {
-  localStorage.clear();
-  coins = 0; watched = 0;
-  updateDisplay();
-  document.getElementById("autoStatus").innerText = "✅ নতুন ইউজার হিসেবে শুরু";
-}
-
 async function showRewardAd() {
-  if (typeof show_9370281 !== "function") return alert("⚠️ SDK লোড হয়নি");
-  if (inCooldown()) return alert("⏳ বিরতি চলছে");
+  if (inCooldown()) return alert("⏳ এখন বিরতি চলছে");
+  if (typeof show_9370281 !== "function") return alert("⚠️ অ্যাড SDK লোড হয়নি");
   try { await show_9370281(); } catch { return; }
+
   watched++; coins += 10; updateDisplay();
 
   if (watched % 5 === 0) {
-    document.getElementById("bonusClickNote").innerHTML = "🟡 এখন একটি অ্যাডে ক্লিক করুন এবং নতুন পেজে ১৫ সেকেন্ড অপেক্ষা করুন";
-    setTimeout(() => {
-      window.open("click.html", "_blank");
-    }, 1000);
+    document.getElementById("bonusClickNote").innerText = "🎁 বোনাস পেতে অ্যাডে ক্লিক করুন এবং পেজে ১৫ সেকেন্ড থাকুন";
   } else {
     document.getElementById("bonusClickNote").innerText = "";
   }
@@ -74,68 +67,73 @@ async function showRewardAd() {
   if (watched % 50 === 0) fullReset();
 }
 
-function startSmartAutoAds() {
+function startAuto() {
   if (isAutoRunning || inCooldown()) return;
   isAutoRunning = true;
-  const startTime = Date.now();
-  localStorage.setItem("autoStart", startTime);
+  autoStartTime = Date.now();
+  localStorage.setItem("autoStartTime", autoStartTime);
   document.getElementById("autoStatus").innerText = "▶️ ১০ মিনিট চলছে";
   showRewardAd();
   autoInterval = setInterval(showRewardAd, 25000);
-  autoStopTimer = setTimeout(() => {
-    stopAutoAds();
-    const until = Date.now() + COOLDOWN_MS;
-    localStorage.setItem("cooldownUntil", until);
-    localStorage.removeItem("autoStart");
+
+  setTimeout(() => {
+    stopAuto();
+    cooldownUntil = Date.now() + 15 * 60 * 1000;
+    localStorage.setItem("cooldownUntil", cooldownUntil);
     startCooldownCountdown();
-    document.getElementById("autoStatus").innerText = "⏸ ১৫ মিনিট বিরতি";
-  }, AUTO_RUN_MS);
+    document.getElementById("autoStatus").innerText = "⏸ ১৫ মিনিট বিরতি চলছে";
+  }, 10 * 60 * 1000);
 }
 
-function stopAutoAds() {
-  if (!isAutoRunning) return;
+function stopAuto() {
   clearInterval(autoInterval);
-  clearTimeout(autoStopTimer);
   isAutoRunning = false;
-  document.getElementById("autoStatus").innerText = "🛑 বন্ধ হয়েছে";
+  document.getElementById("autoStatus").innerText = "🛑 বন্ধ করা হয়েছে";
 }
 
 function inCooldown() {
-  const until = Number(localStorage.getItem("cooldownUntil") || 0);
-  return Date.now() < until;
+  return Date.now() < cooldownUntil;
 }
 
 function startCooldownCountdown() {
-  const until = Number(localStorage.getItem("cooldownUntil") || 0);
-  if (!until) return;
   clearInterval(cooldownTimer);
   cooldownTimer = setInterval(() => {
-    const remain = until - Date.now();
+    let remain = cooldownUntil - Date.now();
     if (remain <= 0) {
       clearInterval(cooldownTimer);
-      localStorage.removeItem("cooldownUntil");
       document.getElementById("countdown").innerText = "";
+      localStorage.removeItem("cooldownUntil");
     } else {
-      const m = Math.floor(remain / 60000), s = Math.floor((remain % 60000) / 1000);
+      let m = Math.floor(remain/60000), s = Math.floor((remain%60000)/1000);
       document.getElementById("countdown").innerText = `⏳ বিরতি: ${m} মিনিট ${s} সেকেন্ড`;
     }
   }, 1000);
 }
 
+function fullReset() {
+  localStorage.clear();
+  coins = 0; watched = 0; autoStartTime = 0; cooldownUntil = 0;
+  localStorage.setItem("username", "User" + Math.floor(Math.random()*9999));
+  updateDisplay();
+  document.getElementById("bonusClickNote").innerText = "🌀 নতুন ইউজার হিসেবে শুরু হলো";
+}
+
+function resumeTimers() {
+  if (autoStartTime && Date.now() - autoStartTime < 10 * 60 * 1000 && !inCooldown()) {
+    isAutoRunning = true;
+    autoInterval = setInterval(showRewardAd, 25000);
+    document.getElementById("autoStatus").innerText = "▶️ অটো আবার শুরু হয়েছে";
+  }
+  if (inCooldown()) startCooldownCountdown();
+}
+
 updateDisplay();
-startCooldownCountdown();
+resumeTimers();
 
 fetch("https://ipapi.co/json").then(r=>r.json()).then(d=>{
   const ip = d.ip, geo = d.country_name || "", org = d.org || "";
   document.getElementById("geoInfo").innerText = `🌍 Geo: ${geo} | IP: ${ip}`;
-  let ipType = "", score = 70;
-  if (/amazon|google|ovh|cloudflare|choopa/i.test(org)) {
-    ipType = "❌ Unsafe"; score = 30;
-  } else if (/verizon|comcast|t-mobile|kpn/i.test(org)) {
-    ipType = "✅ Safe"; score = 100;
-  } else ipType = "⚠️ Medium";
-  document.getElementById("ipType").innerText = "📶 IP: " + ipType;
-  document.getElementById("ipScore").innerText = `📊 IP Score: ${score}/100`;
+  document.getElementById("ipType").innerText = "📶 IP Provider: " + (org || "");
 });
 </script>
 </body>
