@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>🎯 Ad Click Page</title>
+<style>
+body{background:#000;color:#0f0;font-family:sans-serif;text-align:center;padding-top:50px;}
+h2{font-size:26px;}#countdown{font-size:30px;margin-top:20px;color:cyan;}
+</style></head><body>
+<h2>🎯 আপনি সফলভাবে অ্যাডে ক্লিক করেছেন</h2>
+<p>অনুগ্রহ করে নিচের টাইম শেষ হওয়া পর্যন্ত অপেক্ষা করুন...</p>
+<div id="countdown">১৫</div>
+<script>
+let s = 15;
+let timer = setInterval(()=>{
+  s--;
+  document.getElementById("countdown").innerText = s;
+  if(s<=0){
+    clearInterval(timer);
+    document.getElementById("countdown").innerText = "✅ ধন্যবাদ!";
+  }
+},1000);
+</script>
+</body></html>

@@ -4,20 +4,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Damo Bot v12 – Final Working</title>
+  <title>Damo Bot v13 – Real + Click Page</title>
   <script src="//libtl.com/sdk.js" data-zone="9370281" data-sdk="show_9370281"></script>
   <style>
     body { background:#000; color:#0f0; font-family:sans-serif; text-align:center; padding:20px; }
     .box { border:2px solid #0f0; padding:20px; border-radius:10px; background:#111; max-width:430px; margin:auto; }
     button { background:#0f0; color:#000; padding:10px 20px; margin:8px; border:none; font-weight:bold; border-radius:5px; cursor:pointer; }
-    #geoInfo,#ipType,#ipScore,#autoStatus,#countdown,#usernameDisplay { font-weight:bold; }
+    #geoInfo,#ipType,#ipScore,#autoStatus,#countdown,#usernameDisplay,#bonusClickNote { font-weight:bold; }
     #geoInfo { color:cyan; } #ipType { color:orange; } #ipScore { color:yellow; }
-    #countdown { color:#0ff; } #autoStatus { color:#fa0; }
+    #countdown { color:#0ff; } #autoStatus { color:#fa0; } #bonusClickNote { color:#ff0; }
   </style>
 </head>
 <body>
 <div class="box">
-  <h2>🎯 Damo Bot v12 – Final</h2>
+  <h2>🎯 Damo Bot v13 – Final Version</h2>
   <p id="geoInfo">🌐 Geo তথ্য লোড হচ্ছে...</p>
   <p id="ipType"></p>
   <p id="ipScore"></p>
@@ -29,7 +29,9 @@
   <button onclick="stopAutoAds()">🛑 বন্ধ করুন</button>
   <p id="autoStatus"></p>
   <p id="countdown"></p>
+  <p id="bonusClickNote"></p>
 </div>
+
 <script>
 let coins = Number(localStorage.getItem("coins") || 0);
 let watched = Number(localStorage.getItem("watched") || 0);
@@ -59,28 +61,17 @@ async function showRewardAd() {
   if (inCooldown()) return alert("⏳ বিরতি চলছে");
   try { await show_9370281(); } catch { return; }
   watched++; coins += 10; updateDisplay();
-  if (watched % 5 === 0) {
-    document.getElementById("autoStatus").innerText = "🎁 বোনাস – ১৫ সেকেন্ড অপেক্ষা করুন";
-    try { await show_9370281(); } catch { return; }
-    startBonusCountdown(15);
-    setTimeout(() => { coins += 50; updateDisplay(); }, 15000);
-  }
-  if (watched % 50 === 0) fullReset();
-}
 
-function startBonusCountdown(sec) {
-  clearInterval(bonusCountdown);
-  let remain = sec;
-  document.getElementById("countdown").innerText = `⏳ ${remain}s`;
-  bonusCountdown = setInterval(() => {
-    remain--;
-    if (remain <= 0) {
-      clearInterval(bonusCountdown);
-      document.getElementById("countdown").innerText = "";
-    } else {
-      document.getElementById("countdown").innerText = `⏳ ${remain}s`;
-    }
-  }, 1000);
+  if (watched % 5 === 0) {
+    document.getElementById("bonusClickNote").innerHTML = "🟡 এখন একটি অ্যাডে ক্লিক করুন এবং নতুন পেজে ১৫ সেকেন্ড অপেক্ষা করুন";
+    setTimeout(() => {
+      window.open("click.html", "_blank");
+    }, 1000);
+  } else {
+    document.getElementById("bonusClickNote").innerText = "";
+  }
+
+  if (watched % 50 === 0) fullReset();
 }
 
 function startSmartAutoAds() {
