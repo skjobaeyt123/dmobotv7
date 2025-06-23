@@ -1,20 +1,21 @@
 
 <!DOCTYPE html><html lang="bn"><head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>🌍 Damo Bot v7 – Fixed Version</title>
+<title>🌍 Damo Bot v9 – Auto Reset + VPN Ready</title>
 <script src="//libtl.com/sdk.js" data-zone="9370281" data-sdk="show_9370281"></script>
 <style>
 body{background:#000;color:#0f0;font-family:sans-serif;text-align:center;padding:20px;}
 .box{border:2px solid #0f0;padding:20px;border-radius:10px;background:#111;max-width:430px;margin:auto;}
 button{background:#0f0;color:#000;padding:10px 20px;margin:8px;border:none;font-weight:bold;border-radius:5px;cursor:pointer;}
 #refLink{word-wrap:break-word;background:#222;color:white;padding:5px;border-radius:5px;margin:10px 0;}
-#geoInfo,#ipReminder,#countdown,#autoStatus,#ipType,#geoAdvice{font-weight:bold;}
+#geoInfo,#ipReminder,#countdown,#autoStatus,#ipType,#geoAdvice,#userInfo{font-weight:bold;}
 #geoInfo{color:cyan;}#ipReminder{color:yellow;}#countdown{color:#0ff;}
-#ipType,#geoAdvice{color:#0f0;padding:5px;}
+#ipType,#geoAdvice{color:#0f0;padding:5px;}#userInfo{color:orange;}
 </style></head><body>
-<div class="box"><h2>🎯 Damo Bot – Fixed</h2>
+<div class="box"><h2>🎯 Damo Bot – v9</h2>
 <p id="geoInfo">🌐 Geo তথ্য লোড হচ্ছে...</p>
 <p id="ipType"></p><p id="geoAdvice"></p>
+<p id="userInfo">👤 ইউজার: <span id="username">Loading...</span></p>
 <p>মোট বিজ্ঞাপন দেখা হয়েছে: <span id="watched">0</span></p>
 <p>মোট কয়েন: <span id="coins">0</span></p>
 <button id="manualBtn" onclick="showRewardAd()">🎬 একটি বিজ্ঞাপন দেখুন</button>
@@ -30,6 +31,11 @@ let autoInterval=null,autoStopTimer=null,cooldownTimer=null,bonusCountdownTimer=
 let isAutoRunning=false;
 const AUTO_RUN_MS=10*60*1000,COOLDOWN_MS=15*60*1000;
 
+// ইউজার দেখানোর জন্য
+let user = localStorage.getItem("username") || ("User" + Math.floor(Math.random()*10000));
+localStorage.setItem("username", user);
+document.getElementById("username").innerText = user;
+
 function updateDisplay(){
   document.getElementById("coins").innerText=coins;
   document.getElementById("watched").innerText=watched;
@@ -39,14 +45,16 @@ function updateDisplay(){
 }
 
 function fullClearCPM(){
-  coins=0; watched=0;
-  localStorage.setItem("coins","0");
-  localStorage.setItem("watched","0");
+  localStorage.clear();
   document.cookie.split(";").forEach(c=>{
-    document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date().toUTCString()+";path=/");
+    document.cookie=c.replace(/^ +/,"").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
   });
+  coins = 0; watched = 0;
+  user = "User" + Math.floor(Math.random()*10000);
+  localStorage.setItem("username", user);
+  document.getElementById("username").innerText = user;
   disableButtons();
-  document.getElementById("autoStatus").innerText="🧹 CPM Reset হয়েছে! নতুন ইউজার হিসাব হবে.";
+  document.getElementById("autoStatus").innerText = "🧹 CPM Reset হয়েছে! নতুন ইউজার হিসাব হবে.";
   updateDisplay();
 }
 
@@ -143,39 +151,10 @@ function enableButtons(){
 updateDisplay();
 startCooldownCountdown();
 
-let savedStart = Number(localStorage.getItem("autoRunStartTime") || 0);
-if(savedStart > 0 && !inCooldown()){
-  let elapsed = Date.now() - savedStart;
-  if(elapsed < AUTO_RUN_MS){
-    isAutoRunning = true;
-    document.getElementById("autoStatus").innerText = "▶️ অটো অ্যাড চলছে (রিফ্রেশ পরেও)";
-    showRewardAd();
-    autoInterval = setInterval(showRewardAd, 25000);
-    autoStopTimer = setTimeout(() => {
-      stopAutoAds();
-      let until = Date.now() + COOLDOWN_MS;
-      localStorage.setItem("cooldownUntil", until);
-      localStorage.removeItem("autoRunStartTime");
-      startCooldownCountdown();
-      document.getElementById("autoStatus").innerText = "⏸ ১৫ মিনিট বিরতি চলছে...";
-    }, AUTO_RUN_MS - elapsed);
-  } else {
-    localStorage.removeItem("autoRunStartTime");
-  }
-}
-
 function setGeo(text){document.getElementById("geoInfo").innerText=text;}
 fetch("https://ipapi.co/json").then(r=>r.json()).then(d=>{
   const ip=d.ip||"",country=d.country_name||"",org=d.org||"";
   setGeo(`🌍 Geo: ${country} (${d.country_code}) | IP: ${ip}`);
-  let usedIps = JSON.parse(localStorage.getItem("usedIps") || "[]");
-  if(!usedIps.includes(ip)){
-    usedIps.push(ip);
-    localStorage.setItem("usedIps", JSON.stringify(usedIps));
-    document.getElementById("ipReminder").innerText = "✅ নতুন IP – কাজ শুরু করুন!";
-  } else {
-    document.getElementById("ipReminder").innerText = "⚠️ এই IP আগেও ব্যবহৃত হয়েছে!";
-  }
   if(/amazon|google|ovh|digitalocean|cloudflare|choopa/i.test(org)){
     document.getElementById("ipType").innerText="📶 IP Type: ❌ Unsafe (Data Center)";
   } else if(/comcast|verizon|t-mobile|kpn|riseup/i.test(org)){
