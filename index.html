@@ -1,15 +1,18 @@
+
 <!DOCTYPE html><html lang="bn"><head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>🌍 Damo Bot v7 – Safe IP & Geo + CPM Fix</title>
+<title>🌍 Damo Bot v7 – Fixed Version</title>
 <script src="//libtl.com/sdk.js" data-zone="9370281" data-sdk="show_9370281"></script>
-<style>body{background:#000;color:#0f0;font-family:sans-serif;text-align:center;padding:20px;}
+<style>
+body{background:#000;color:#0f0;font-family:sans-serif;text-align:center;padding:20px;}
 .box{border:2px solid #0f0;padding:20px;border-radius:10px;background:#111;max-width:430px;margin:auto;}
 button{background:#0f0;color:#000;padding:10px 20px;margin:8px;border:none;font-weight:bold;border-radius:5px;cursor:pointer;}
 #refLink{word-wrap:break-word;background:#222;color:white;padding:5px;border-radius:5px;margin:10px 0;}
 #geoInfo,#ipReminder,#countdown,#autoStatus,#ipType,#geoAdvice{font-weight:bold;}
 #geoInfo{color:cyan;}#ipReminder{color:yellow;}#countdown{color:#0ff;}
-#ipType,#geoAdvice{color:#0f0;padding:5px;}</style></head><body>
-<div class="box"><h2>🎯 Damo Bot – Final v7</h2>
+#ipType,#geoAdvice{color:#0f0;padding:5px;}
+</style></head><body>
+<div class="box"><h2>🎯 Damo Bot – Fixed</h2>
 <p id="geoInfo">🌐 Geo তথ্য লোড হচ্ছে...</p>
 <p id="ipType"></p><p id="geoAdvice"></p>
 <p>মোট বিজ্ঞাপন দেখা হয়েছে: <span id="watched">0</span></p>
@@ -19,81 +22,175 @@ button{background:#0f0;color:#000;padding:10px 20px;margin:8px;border:none;font-
 <button onclick="stopAutoAds()">🛑 বন্ধ করুন</button>
 <p id="refLink">https://t.me/DamoBot?start=selfuser</p>
 <p id="autoStatus" style="color:#0ff;"></p><p id="countdown"></p><p id="ipReminder"></p></div>
+
 <script>
 let coins=Number(localStorage.getItem("coins")||0);
 let watched=Number(localStorage.getItem("watched")||0);
 let autoInterval=null,autoStopTimer=null,cooldownTimer=null,bonusCountdownTimer=null;
 let isAutoRunning=false;
 const AUTO_RUN_MS=10*60*1000,COOLDOWN_MS=15*60*1000;
-function updateDisplay(){document.getElementById("coins").innerText=coins;
-document.getElementById("watched").innerText=watched;
-localStorage.setItem("coins",coins);localStorage.setItem("watched",watched);
-document.getElementById("ipReminder").innerText=watched>=250?
-"⚠️ ২৫০টি অ্যাড হয়েছে! এখন VPN Disconnect করে নতুন IP নিন.":"";}
-function fullClearCPM(){localStorage.clear();
-document.cookie.split(";").forEach(c=>{document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date().toUTCString()+";path=/");});
-coins=0;watched=0;disableButtons();
-document.getElementById("autoStatus").innerText="🧹 CPM Reset হয়েছে! নতুন ইউজার হিসাব হবে.";updateDisplay();}
+
+function updateDisplay(){
+  document.getElementById("coins").innerText=coins;
+  document.getElementById("watched").innerText=watched;
+  localStorage.setItem("coins",coins);
+  localStorage.setItem("watched",watched);
+  document.getElementById("ipReminder").innerText=watched>=250?"⚠️ ২৫০টি অ্যাড হয়েছে! এখন VPN Disconnect করে নতুন IP নিন.":"";
+}
+
+function fullClearCPM(){
+  coins=0; watched=0;
+  localStorage.setItem("coins","0");
+  localStorage.setItem("watched","0");
+  document.cookie.split(";").forEach(c=>{
+    document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date().toUTCString()+";path=/");
+  });
+  disableButtons();
+  document.getElementById("autoStatus").innerText="🧹 CPM Reset হয়েছে! নতুন ইউজার হিসাব হবে.";
+  updateDisplay();
+}
+
 async function waitMs(ms){return new Promise(res=>setTimeout(res,ms));}
-async function showRewardAd(){if(typeof show_9370281!=="function"){alert("SDK লোড হয়নি");return;}
-if(inCooldown()){alert("⏳ এখন বিরতি চলছে");return;}
-try{await show_9370281();}catch(e){console.log(e);return;}
-watched++;coins+=10;updateDisplay();
-if(watched%5===0){document.getElementById("autoStatus").innerText="🎁 বোনাস পেতে অ্যাডে ক্লিক করুন ও ১৫ সেকেন্ড অপেক্ষা করুন";
-try{await show_9370281();}catch(e){return;}
-startBonusCountdown(15);await waitMs(15000);coins+=50;
-document.getElementById("autoStatus").innerText="✅ ৫০ বোনাস কয়েন যুক্ত হলো!";updateDisplay();}
-if(watched%50===0)fullClearCPM();}
-function startBonusCountdown(sec){clearInterval(bonusCountdownTimer);let remain=sec;
-document.getElementById("countdown").innerText=`⏳ ${remain}s`;
-bonusCountdownTimer=setInterval(()=>{remain--;
-if(remain<=0){clearInterval(bonusCountdownTimer);
-document.getElementById("countdown").innerText="";}
-else{document.getElementById("countdown").innerText=`⏳ ${remain}s`;}
-},1000);}
-function startSmartAutoAds(){if(isAutoRunning||inCooldown())return;
-isAutoRunning=true;
-document.getElementById("autoStatus").innerText="▶️ অটো অ্যাড চলছে (১০ মিনিট)";
-showRewardAd();autoInterval=setInterval(showRewardAd,25000);
-autoStopTimer=setTimeout(()=>{stopAutoAds();
-let until=Date.now()+COOLDOWN_MS;
-localStorage.setItem("cooldownUntil",until);startCooldownCountdown();
-document.getElementById("autoStatus").innerText="⏸ ১৫ মিনিট বিরতি চলছে...";
-},AUTO_RUN_MS);}
-function stopAutoAds(){if(!isAutoRunning)return;
-clearInterval(autoInterval);clearTimeout(autoStopTimer);isAutoRunning=false;
-document.getElementById("autoStatus").innerText="🛑 অটো অ্যাড বন্ধ হয়েছে";}
-function inCooldown(){let until=Number(localStorage.getItem("cooldownUntil")||0);
-return Date.now()<until;}
-function startCooldownCountdown(){let until=Number(localStorage.getItem("cooldownUntil")||0);
-if(!until)return;clearInterval(cooldownTimer);
-cooldownTimer=setInterval(()=>{let remain=until-Date.now();
-if(remain<=0){clearInterval(cooldownTimer);
-localStorage.removeItem("cooldownUntil");
-document.getElementById("countdown").innerText="";enableButtons();}
-else{let min=Math.floor(remain/60000),sec=Math.floor((remain%60000)/1000);
-document.getElementById("countdown").innerText=`⏳ ${min} মিনিট ${sec} সেকেন্ড বাকি...`;disableButtons();}
-},1000);}
-function disableButtons(){document.getElementById("manualBtn").disabled=true;
-document.getElementById("autoBtn").disabled=true;}
-function enableButtons(){document.getElementById("manualBtn").disabled=false;
-document.getElementById("autoBtn").disabled=false;}
-updateDisplay();startCooldownCountdown();
+
+async function showRewardAd(){
+  if(typeof show_9370281!=="function"){alert("SDK লোড হয়নি");return;}
+  if(inCooldown()){alert("⏳ এখন বিরতি চলছে");return;}
+  try{await show_9370281();}catch(e){console.log(e);return;}
+  watched++; coins+=10; updateDisplay();
+  if(watched%5===0){
+    document.getElementById("autoStatus").innerText="🎁 বোনাস পেতে অ্যাডে ক্লিক করুন ও ১৫ সেকেন্ড অপেক্ষা করুন";
+    try{await show_9370281();}catch(e){return;}
+    startBonusCountdown(15); await waitMs(15000); coins+=50;
+    document.getElementById("autoStatus").innerText="✅ ৫০ বোনাস কয়েন যুক্ত হলো!"; updateDisplay();
+  }
+  if(watched%50===0) fullClearCPM();
+}
+
+function startBonusCountdown(sec){
+  clearInterval(bonusCountdownTimer);
+  let remain=sec;
+  document.getElementById("countdown").innerText=`⏳ ${remain}s`;
+  bonusCountdownTimer=setInterval(()=>{
+    remain--;
+    if(remain<=0){
+      clearInterval(bonusCountdownTimer);
+      document.getElementById("countdown").innerText="";
+    }else{
+      document.getElementById("countdown").innerText=`⏳ ${remain}s`;
+    }
+  },1000);
+}
+
+function startSmartAutoAds(){
+  if(isAutoRunning||inCooldown())return;
+  isAutoRunning=true;
+  localStorage.setItem("autoRunStartTime", Date.now());
+  document.getElementById("autoStatus").innerText="▶️ অটো অ্যাড চলছে (১০ মিনিট)";
+  showRewardAd();
+  autoInterval=setInterval(showRewardAd,25000);
+  autoStopTimer=setTimeout(()=>{
+    stopAutoAds();
+    let until=Date.now()+COOLDOWN_MS;
+    localStorage.setItem("cooldownUntil",until);
+    localStorage.removeItem("autoRunStartTime");
+    startCooldownCountdown();
+    document.getElementById("autoStatus").innerText="⏸ ১৫ মিনিট বিরতি চলছে...";
+  },AUTO_RUN_MS);
+}
+
+function stopAutoAds(){
+  if(!isAutoRunning)return;
+  clearInterval(autoInterval);
+  clearTimeout(autoStopTimer);
+  isAutoRunning=false;
+  document.getElementById("autoStatus").innerText="🛑 অটো অ্যাড বন্ধ হয়েছে";
+}
+
+function inCooldown(){
+  let until=Number(localStorage.getItem("cooldownUntil")||0);
+  return Date.now()<until;
+}
+
+function startCooldownCountdown(){
+  let until=Number(localStorage.getItem("cooldownUntil")||0);
+  if(!until)return;
+  clearInterval(cooldownTimer);
+  cooldownTimer=setInterval(()=>{
+    let remain=until-Date.now();
+    if(remain<=0){
+      clearInterval(cooldownTimer);
+      localStorage.removeItem("cooldownUntil");
+      document.getElementById("countdown").innerText="";
+      enableButtons();
+    }else{
+      let min=Math.floor(remain/60000),sec=Math.floor((remain%60000)/1000);
+      document.getElementById("countdown").innerText=`⏳ ${min} মিনিট ${sec} সেকেন্ড বাকি...`;
+      disableButtons();
+    }
+  },1000);
+}
+
+function disableButtons(){
+  document.getElementById("manualBtn").disabled=true;
+  document.getElementById("autoBtn").disabled=true;
+}
+
+function enableButtons(){
+  document.getElementById("manualBtn").disabled=false;
+  document.getElementById("autoBtn").disabled=false;
+}
+
+updateDisplay();
+startCooldownCountdown();
+
+let savedStart = Number(localStorage.getItem("autoRunStartTime") || 0);
+if(savedStart > 0 && !inCooldown()){
+  let elapsed = Date.now() - savedStart;
+  if(elapsed < AUTO_RUN_MS){
+    isAutoRunning = true;
+    document.getElementById("autoStatus").innerText = "▶️ অটো অ্যাড চলছে (রিফ্রেশ পরেও)";
+    showRewardAd();
+    autoInterval = setInterval(showRewardAd, 25000);
+    autoStopTimer = setTimeout(() => {
+      stopAutoAds();
+      let until = Date.now() + COOLDOWN_MS;
+      localStorage.setItem("cooldownUntil", until);
+      localStorage.removeItem("autoRunStartTime");
+      startCooldownCountdown();
+      document.getElementById("autoStatus").innerText = "⏸ ১৫ মিনিট বিরতি চলছে...";
+    }, AUTO_RUN_MS - elapsed);
+  } else {
+    localStorage.removeItem("autoRunStartTime");
+  }
+}
+
 function setGeo(text){document.getElementById("geoInfo").innerText=text;}
 fetch("https://ipapi.co/json").then(r=>r.json()).then(d=>{
-const ip=d.ip||"",country=d.country_name||"",org=d.org||"";
-setGeo(`🌍 Geo: ${country} (${d.country_code}) | IP: ${ip}`);
-if(/amazon|google|ovh|digitalocean|cloudflare|choopa/i.test(org)){
-document.getElementById("ipType").innerText="📶 IP Type: ❌ Unsafe (Data Center)";}
-else if(/comcast|verizon|t-mobile|kpn|riseup/i.test(org)){
-document.getElementById("ipType").innerText="📶 IP Type: ✅ Safe (Residential)";}
-else{document.getElementById("ipType").innerText="📶 IP Type: ⚠️ Medium (May be detected)";}
-let geoMsg="";
-if(country==="United States"||country==="Germany"||country==="Canada"){
-geoMsg="🟢 Excellent Geo – CPM $6–$10";}
-else if(country==="Netherlands"||country==="UK"||country==="France"){
-geoMsg="🟡 Good Geo – CPM $4–$7";}
-else{geoMsg="🔴 Weak Geo – CPM below $1";}
-document.getElementById("geoAdvice").innerText=`📊 Geo Advice: ${geoMsg}`;
+  const ip=d.ip||"",country=d.country_name||"",org=d.org||"";
+  setGeo(`🌍 Geo: ${country} (${d.country_code}) | IP: ${ip}`);
+  let usedIps = JSON.parse(localStorage.getItem("usedIps") || "[]");
+  if(!usedIps.includes(ip)){
+    usedIps.push(ip);
+    localStorage.setItem("usedIps", JSON.stringify(usedIps));
+    document.getElementById("ipReminder").innerText = "✅ নতুন IP – কাজ শুরু করুন!";
+  } else {
+    document.getElementById("ipReminder").innerText = "⚠️ এই IP আগেও ব্যবহৃত হয়েছে!";
+  }
+  if(/amazon|google|ovh|digitalocean|cloudflare|choopa/i.test(org)){
+    document.getElementById("ipType").innerText="📶 IP Type: ❌ Unsafe (Data Center)";
+  } else if(/comcast|verizon|t-mobile|kpn|riseup/i.test(org)){
+    document.getElementById("ipType").innerText="📶 IP Type: ✅ Safe (Residential)";
+  } else {
+    document.getElementById("ipType").innerText="📶 IP Type: ⚠️ Medium (May be detected)";
+  }
+  let geoMsg="";
+  if(country==="United States"||country==="Germany"||country==="Canada"){
+    geoMsg="🟢 Excellent Geo – CPM $6–$10";
+  } else if(country==="Netherlands"||country==="UK"||country==="France"){
+    geoMsg="🟡 Good Geo – CPM $4–$7";
+  } else {
+    geoMsg="🔴 Weak Geo – CPM below $1";
+  }
+  document.getElementById("geoAdvice").innerText=`📊 Geo Advice: ${geoMsg}`;
 }).catch(()=>setGeo("🌐 Geo Info লোড হয়নি"));
 </script></body></html>
